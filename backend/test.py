@@ -4,9 +4,10 @@ import random
 import torch
 import yaml
 from ultralytics import YOLO
-import matplotlib.pyplot as plt
-from PIL import Image
+#import matplotlib.pyplot as plt
+#from PIL import Image
 
+"""
 def visualize(metrics):
 
     evaluation_dir = str(metrics.save_dir)
@@ -29,16 +30,17 @@ def visualize(metrics):
                 plt.title(filename)
                 plt.axis("off")
                 plt.show()
+"""
 
 #Repo directory
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
 #Root dataset directory
 #DATASET_DIR = Path("../Fish Finder.v17i.yolo26").resolve()
-DATASET_DIR = Path("../DATA_MD_SUBSET").resolve()
+DATASET_DIR = os.path.join(PROJECT_DIR, "DATA_MD_SUBSET")
 
 #Best model weights path
-BEST_MODEL_PATH = PROJECT_DIR / "runs/fish_yolov8n/weights/best.pt"
+BEST_MODEL_PATH = os.path.join(PROJECT_DIR, "runs/fish_yolov8n/weights/best.pt")
 
 #yaml path
 original_yaml = os.path.join(DATASET_DIR, "data.yaml") #join the path to our .yaml file
@@ -59,7 +61,7 @@ metrics = best_model.val(
     split="test",
     imgsz=IMAGE_SIZE,
     batch=BATCH_SIZE,
-    device="cpu",
+    device=DEVICE,
     workers=0,
     plots=True,
     project=str(PROJECT_DIR / "runs"),
@@ -71,5 +73,6 @@ print(f"Precision:    {metrics.box.mp:.4f}")
 print(f"Recall:       {metrics.box.mr:.4f}")
 print(f"mAP@50:       {metrics.box.map50:.4f}")
 print(f"mAP@50:95:    {metrics.box.map:.4f}")
+print("\nEvaluation saved to:", metrics.save_dir)
 
-visualize(metrics)
+#visualize(metrics)
