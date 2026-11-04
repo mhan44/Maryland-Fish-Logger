@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+
+# Ultralytics caches
+*.cache
+
+# Datasets
+Fish Finder.v17i.yolo26/
+Fish Finder.v17i.yolo26_old/
+DATA_MD_SUBSET/
+
+# Test/models
+fish_yolov8n_old/
+fish_test_old/
+
+# Environment
+.env
+.venv/
