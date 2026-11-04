@@ -34,7 +34,8 @@ def visualize(metrics):
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
 #Root dataset directory
-DATASET_DIR = Path("../Fish Finder.v17i.yolo26").resolve()
+#DATASET_DIR = Path("../Fish Finder.v17i.yolo26").resolve()
+DATASET_DIR = Path("../DATA_MD_SUBSET").resolve()
 
 #Best model weights path
 BEST_MODEL_PATH = PROJECT_DIR / "runs/fish_yolov8n/weights/best.pt"
@@ -58,7 +59,7 @@ metrics = best_model.val(
     split="test",
     imgsz=IMAGE_SIZE,
     batch=BATCH_SIZE,
-    device=DEVICE,
+    device="cpu",
     workers=0,
     plots=True,
     project=str(PROJECT_DIR / "runs"),

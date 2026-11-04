@@ -1,0 +1,16 @@
+path: /home/jetson_labs/DATA690-Maryland-Fish-Logger/DATA_MD_SUBSET
+train: train/images
+val: valid/images
+test: test/images
+nc: 10
+names:
+  0: Perch - White
+  1: Bowfin
+  2: Crappie - Black
+  3: Bass - Smallmouth
+  4: Catfish - Blue
+  5: Catfish - Flathead
+  6: Bluegill
+  7: Shad - American
+  8: Bass - Largemouth
+  9: Bass - Striped

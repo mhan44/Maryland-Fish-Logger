@@ -12,17 +12,18 @@ BACKEND_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = BACKEND_DIR.parent
 
 #Root dataset directory
-DATASET_DIR = Path("../Fish Finder.v17i.yolo26").resolve()
+#DATASET_DIR = Path("../Fish Finder.v17i.yolo26").resolve()
+DATASET_DIR = Path("../DATA_MD_SUBSET").resolve()
 
 #Train/Validation/Test dataset directories
-TRAIN_DATA_DIR = os.path.abspath("../Fish Finder.v17i.yolo26/train/images/") #load filepath to training images
-TRAIN_LABEL_DIR = os.path.abspath("../Fish Finder.v17i.yolo26/train/labels/") #load filepath to training labels
+TRAIN_DATA_DIR = os.path.join(DATASET_DIR, "train/images/") #load filepath to training images
+TRAIN_LABEL_DIR = os.path.join(DATASET_DIR, "train/labels/") #load filepath to training labels
 
-VAL_DATA_DIR = os.path.abspath("../Fish Finder.v17i.yolo26/valid/images/") #load filepath to validation images
-VAL_LABEL_DIR = os.path.abspath("../Fish Finder.v17i.yolo26/valid/labels/") #load filepath to validation labels
+VAL_DATA_DIR = os.path.join(DATASET_DIR, "valid/images/") #load filepath to validation images
+VAL_LABEL_DIR = os.path.join(DATASET_DIR, "valid/labels/") #load filepath to validation labels
 
-TEST_DATA_DIR = os.path.abspath("../Fish Finder.v17i.yolo26/test/images/") #load filepath to test images
-TEST_LABEL_DIR = os.path.abspath("../Fish Finder.v17i.yolo26/test/labels/") #load filepath to test labels
+TEST_DATA_DIR = os.path.join(DATASET_DIR, "test/images/") #load filepath to test images
+TEST_LABEL_DIR = os.path.join(DATASET_DIR, "test/labels/") #load filepath to test labels
 
 original_yaml = os.path.join(DATASET_DIR, "data.yaml") #join the path to our .yaml file
 
@@ -32,7 +33,6 @@ with open(original_yaml, "r", encoding="utf-8") as file:
 
 names = original_config["names"]
 print("Number of fish species:", len(names))
-
 #================================================================================================================================
 #Since we have a provided validation and training set, there's no need to partition the training data any further 
 DEVICE = 0 if torch.cuda.is_available() else "cpu"
