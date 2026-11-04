@@ -1,0 +1,1 @@
+Docker base image = nvcr.io/nvidia/l4t-ml:r36.2.0-py3
