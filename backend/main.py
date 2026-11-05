@@ -6,7 +6,12 @@ from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.staticfiles import StaticFiles
 from backend.prediction import predict_fish, OUTPUT_DIR
 
+from datetime import date
+from pydantic import BaseModel, Field
+from backend.database import init_db, save_catch, get_catches
+
 app = FastAPI(title="Maryland Fish Logger API")
+init_db()
 
 #Prediction images accessible via HTTP
 app.mount("/predictions", StaticFiles(directory=str(OUTPUT_DIR)), name="predictions")
@@ -42,3 +47,35 @@ async def predict(file: UploadFile = File(...)):
     prediction["image_url"] = f"/predictions/{image_conf_path.name}"
 
     return prediction
+
+
+# Structure of a catch record
+class Catch(BaseModel):
+    species: str | None = None
+    predicted_species: str | None = None
+    confidence: float | None = Field(default=None, ge=0, le=1)
+    length_inches: float | None = Field(default=None, gt=0)
+    weight_lbs: float | None = Field(default=None, gt=0)
+    date_caught: date | None = None
+    location: str | None = None
+    lure: str | None = None
+    notes: str | None = None
+    image_url: str | None = None
+
+#Log catch
+@app.post("/catches", status_code=201)
+def create_catch(catch: Catch):
+    catch_data = catch.model_dump(mode="json")
+    catch_id = save_catch(catch_data)
+
+    return {
+        "message": "Catch saved successfully",
+        "id": catch_id
+    }
+
+
+#Retrieve catches
+@app.get("/catches")
+def list_catches():
+    return get_catches()
+
