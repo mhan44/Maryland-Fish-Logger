@@ -18,15 +18,14 @@ The application backend is developed with Python and FastAPI, with a planned And
 * Frontend: Android Studio, Kotlin
 ## Model and Data Source
 The YOLO model was fine-tuned using a subset of the open source 2025 Fish Finder dataset from Roboflow:
-https://universe.roboflow.com/fish-finder/fish-finder-p1ljc
+* https://universe.roboflow.com/fish-finder/fish-finder-p1ljc
 The selected species/classes being:
-{"Perch - White", "Bowfin", "Crappie - Black", "Bass - Smallmouth", "Catfish - Blue", "Catfish - Flathead", "Bluegill", "Shad - American", "Bass - Largemouth", "Bass - Striped"}
+* {"Perch - White", "Bowfin", "Crappie - Black", "Bass - Smallmouth", "Catfish - Blue", "Catfish - Flathead", "Bluegill", "Shad - American", "Bass - Largemouth", "Bass - Striped"}
 The YOLOv8n model was trained on 50 epochs over the subset DATA_MD_SUBSET, with a batch size of 16 and default image size of 640x640. From the training, the best model weights were selected and used to evaluate the model on the validation set, producing these performance metrics:
-Final test metrics
-Precision:    0.8570
-Recall:       0.8613
-mAP@50:       0.9136
-mAP@50:95:    0.8041
+* Precision:    0.8570
+* Recall:       0.8613
+* mAP@50:       0.9136
+* mAP@50:95:    0.8041
 Indicating strong model fit to the subset of data.
 ## Backend Structure:
 * data_count.py - Data exploration script which listed label counts for the original dataset
