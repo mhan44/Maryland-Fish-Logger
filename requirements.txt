@@ -1,0 +1,4 @@
+Required packages:
+1. fastapi 
+2. uvicorn 
+3. python-multipart
