@@ -1,13 +1,13 @@
-#Maryland Fish Logger
-##Overview
+# Maryland Fish Logger
+## Overview
 Maryland Fish Logger is a lightweight object detection application designed for recreational anglers in Maryland. The application uses a fine-tuned YOLOv8 object detection model to classify species from user-submitted images. From these model predictions, users can log their catches and manually confirm species, as well as save relevant information about their catches.
 The application backend is developed with Python and FastAPI, with a planned Android frontend.
-##Features
+## Features
 * Identifies 10 common fish species found in inland Maryland
 * Outputs the input image with a bounding box, label prediction, and confidence score
 * Flexible with manual user confirmation
 * Save catch log records with date, timestamp, measurements, bait/lure type, and other notes
-##Tech Stack
+## Tech Stack
 * Language: Python 3.10
 * ML: Ultralytics YOLOv8n, PyTorch
 * Backend Framework: FastAPI
@@ -16,7 +16,7 @@ The application backend is developed with Python and FastAPI, with a planned And
 * Docker Base Image: nvcr.io/nvidia/l4t-ml:r36.2.0-py3
 * Python Environment: Conda (YOLO_GPU)
 * Frontend: Android Studio, Kotlin
-##Model and Data Source
+## Model and Data Source
 The YOLO model was fine-tuned using a subset of the open source 2025 Fish Finder dataset from Roboflow:
 https://universe.roboflow.com/fish-finder/fish-finder-p1ljc
 The selected species/classes being:
@@ -28,7 +28,7 @@ Recall:       0.8613
 mAP@50:       0.9136
 mAP@50:95:    0.8041
 Indicating strong model fit to the subset of data.
-##Backend Structure:
+## Backend Structure:
 * data_count.py - Data exploration script which listed label counts for the original dataset
 * subset.py - Script to create the subset of selected species
 * train.py - Fine tunes and trains the YOLO model on the subset of data over 50 epochs
@@ -37,13 +37,13 @@ Indicating strong model fit to the subset of data.
 * main.py - Defines FastAPI endpoints for predictions and logging, initializes SQLite database
 * database.py - Defines the SQLite Schema and database operations (initialize, insert, get)
 * requirements.txt - Lists required Python packages
-##Running backend
+## Running backend
 From the root repository, run:
 * python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
 * With the IP address as the same network address the Jetson Nano device is connected to
 The interactive API can be tested at:
 * http://0.0.0.0:8000/docs
-##Endpoints
+## Endpoints
 * POST - /predict = Upload image
 * POST - /catches = Log a catch record
 * GET - /catches = Retrieve all logged catch records
