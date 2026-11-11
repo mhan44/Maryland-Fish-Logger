@@ -33,9 +33,10 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.UUID
+import java.time.LocalDate
 
 //Jetson IP
-private const val BASE_URL = "http://10.200.52.53:8000"
+internal const val BASE_URL = "http://10.200.52.53:8000"
 
 /*
 - Activity = Entry point for user interaction, usually a screen. MainActivity is the initial launch activity when the android app opens.
@@ -48,9 +49,24 @@ private const val BASE_URL = "http://10.200.52.53:8000"
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             MaterialTheme {
-                FishLoggerHome()
+
+                //Track which screen is currently displayed
+                var showJournal by remember {
+                    mutableStateOf(false)
+                }
+
+                if (showJournal) {
+                    CatchJournalScreen(
+                        onBack = { showJournal = false }
+                    )
+                } else {
+                    FishLoggerHome(
+                        onOpenJournal = { showJournal = true }
+                    )
+                }
             }
         }
     }
@@ -60,7 +76,8 @@ class MainActivity : ComponentActivity() {
 data class FishPrediction(
     val species: String,
     val confidence: Double?,
-    val image: Bitmap
+    val image: Bitmap,
+    val imageUrl: String
 )
 
 //Upload selected fish image to the Jetson backend for prediction
@@ -172,12 +189,104 @@ suspend fun predictFish(context: Context, imageUri: Uri): FishPrediction =
             }
 
             //Return prediction data to the frontend
-            FishPrediction(species, confidence, bitmap)
+            FishPrediction(species, confidence, bitmap, imageUrl)
 
         } finally {
             connection.disconnect()
         }
     }
+
+//Save a user-confirmed catch to the Jetson SQLite database
+suspend fun saveCatch(
+    prediction: FishPrediction,
+    confirmedSpecies: String,
+    length: String,
+    weight: String,
+    dateCaught: String,
+    location: String,
+    lure: String,
+    notes: String
+): Int = withContext(Dispatchers.IO) {
+
+    //Convert optional measurements from text into numbers
+    fun parseMeasurement(value: String, field: String): Double? {
+        if (value.isBlank()) return null
+
+        val number = value.trim().toDoubleOrNull()
+            ?: error("$field must be a number")
+
+        require(number > 0) { "$field must be greater than zero" }
+        return number
+    }
+
+    val lengthValue = parseMeasurement(length, "Length")
+    val weightValue = parseMeasurement(weight, "Weight")
+
+    //Check date formatting (YYYY-MM-DD)
+    val validDate = dateCaught.trim().takeIf { it.isNotEmpty() }
+    if (validDate != null) LocalDate.parse(validDate)
+
+    //Create JSON matching the FastAPI Catch model
+    val catchData = JSONObject().apply {
+        put(
+            "species",
+            confirmedSpecies.trim().takeIf { it.isNotEmpty() }
+                ?: JSONObject.NULL
+        )
+        put(
+            "predicted_species",
+            prediction.species.takeIf { it != "Unidentified" }
+                ?: JSONObject.NULL
+        )
+        put("confidence", prediction.confidence ?: JSONObject.NULL)
+        put("length_inches", lengthValue ?: JSONObject.NULL)
+        put("weight_lbs", weightValue ?: JSONObject.NULL)
+        put("date_caught", validDate ?: JSONObject.NULL)
+        put("location", location.trim())
+        put("lure", lure.trim())
+        put("notes", notes.trim())
+        put("image_url", prediction.imageUrl)
+    }
+
+    //Connect to the catch logging endpoint
+    val connection = (
+            URL("$BASE_URL/catches").openConnection()
+                    as HttpURLConnection
+            ).apply {
+            requestMethod = "POST"
+            doOutput = true
+            connectTimeout = 10000
+            readTimeout = 10000
+            setRequestProperty("Content-Type", "application/json")
+        }
+
+    try {
+        //Send JSON catch data to FastAPI
+        connection.outputStream.use { output ->
+            output.write(catchData.toString().toByteArray(Charsets.UTF_8))
+        }
+
+        val responseCode = connection.responseCode
+
+        if (responseCode != 201) {
+            val errorMessage = connection.errorStream
+                ?.bufferedReader()
+                ?.use { it.readText() }
+
+            error("HTTP $responseCode: $errorMessage")
+        }
+
+        //Return the ID assigned by SQLite
+        val response = connection.inputStream
+            .bufferedReader()
+            .use { it.readText() }
+
+        JSONObject(response).getInt("id")
+
+    } finally {
+        connection.disconnect()
+    }
+}
 
 /*
 - @Composable denotes that this function is used for the user interface, includes components like
@@ -192,7 +301,7 @@ padding(24.dp) adds spacing within the layout
 - fun(x : y): String, where :y defines the parameter datatype of x and :String is the return type
 */
 @Composable
-fun FishLoggerHome() {
+fun FishLoggerHome(onOpenJournal: () -> Unit) {
 
     var status by remember { mutableStateOf("Not connected") } //relevant UI is updated automatically when status changes
     val scope = rememberCoroutineScope() //Coroutine allows Kotlin to run asynchronous, suspendable operations.
@@ -243,6 +352,10 @@ fun FishLoggerHome() {
         )
 
         Text("Identify fish and record your catches.")
+
+        Button(onClick = onOpenJournal) {
+            Text("My Catch Journal")
+        }
 
         Button(
             onClick = { //When button is clicked, execute code
@@ -354,6 +467,128 @@ fun FishLoggerHome() {
                     .height(300.dp),
                 contentScale = ContentScale.Fit
             )
+
+            HorizontalDivider()
+
+            Text(
+                "Log Your Catch",
+                style = MaterialTheme.typography.titleLarge
+            )
+
+            //Store user-confirmed catch information
+            //State resets whenever a new prediction is received
+            var confirmedSpecies by remember(result) {
+                mutableStateOf(
+                    if (result.species == "Unidentified") ""
+                    else result.species
+                )
+            }
+
+            var length by remember(result) { mutableStateOf("") }
+            var weight by remember(result) { mutableStateOf("") }
+            var dateCaught by remember(result) {
+                mutableStateOf(LocalDate.now().toString())
+            }
+            var location by remember(result) { mutableStateOf("") }
+            var lure by remember(result) { mutableStateOf("") }
+            var notes by remember(result) { mutableStateOf("") }
+
+            var isSaving by remember(result) { mutableStateOf(false) }
+            var saved by remember(result) { mutableStateOf(false) }
+            var saveStatus by remember(result) { mutableStateOf("") }
+
+            //Allow the user to confirm or correct the model prediction
+            //Leave species blank if the fish is unidentified
+            OutlinedTextField(
+                value = confirmedSpecies,
+                onValueChange = { confirmedSpecies = it },
+                label = { Text("Confirmed Species (optional)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = length,
+                onValueChange = { length = it },
+                label = { Text("Length (inches)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = weight,
+                onValueChange = { weight = it },
+                label = { Text("Weight (lbs)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = dateCaught,
+                onValueChange = { dateCaught = it },
+                label = { Text("Date (YYYY-MM-DD)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = location,
+                onValueChange = { location = it },
+                label = { Text("Location") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = lure,
+                onValueChange = { lure = it },
+                label = { Text("Lure / Bait") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = notes,
+                onValueChange = { notes = it },
+                label = { Text("Notes") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 2
+            )
+
+            //Save catch record to SQLite through FastAPI
+            Button(
+                onClick = {
+                    scope.launch {
+                        isSaving = true
+                        saveStatus = "Saving catch..."
+
+                        try {
+                            val catchId = saveCatch(
+                                prediction = result,
+                                confirmedSpecies = confirmedSpecies,
+                                length = length,
+                                weight = weight,
+                                dateCaught = dateCaught,
+                                location = location,
+                                lure = lure,
+                                notes = notes
+                            )
+
+                            saved = true
+                            saveStatus = "Catch #$catchId saved successfully"
+
+                        } catch (e: Exception) {
+                            saveStatus = "Error: ${e.message}"
+                        } finally {
+                            isSaving = false
+                        }
+                    }
+                },
+                enabled = !isSaving && !saved
+            ) {
+                Text("Save Catch")
+            }
+
+            if (isSaving) {
+                CircularProgressIndicator()
+            }
+
+            Text(saveStatus)
+
         }
     }
 }
