@@ -8,7 +8,7 @@ from backend.prediction import predict_fish, OUTPUT_DIR
 
 from datetime import date
 from pydantic import BaseModel, Field
-from backend.database import init_db, save_catch, get_catches
+from backend.database import init_db, save_catch, get_catches, update_catch, delete_catch
 
 app = FastAPI(title="Maryland Fish Logger API")
 init_db()
@@ -79,3 +79,50 @@ def create_catch(catch: Catch):
 def list_catches():
     return get_catches()
 
+
+#Update an existing catch
+@app.put("/catches/{catch_id}")
+def update_existing_catch(catch_id: int, catch: Catch):
+
+    #Convert validated Pydantic data into a dictionary
+    catch_data = catch.model_dump(
+        mode="json",
+        exclude_unset=True
+    )
+
+    if not catch_data:
+        raise HTTPException(
+            status_code=400,
+            detail="No fields provided for update"
+        )
+
+    updated = update_catch(catch_id, catch_data)
+
+    if not updated:
+        raise HTTPException(
+            status_code=404,
+            detail="Catch not found"
+        )
+
+    return {
+        "message": "Catch updated successfully",
+        "id": catch_id
+    }
+
+
+#Delete an existing catch
+@app.delete("/catches/{catch_id}")
+def delete_existing_catch(catch_id: int):
+
+    deleted = delete_catch(catch_id)
+
+    if not deleted:
+        raise HTTPException(
+            status_code=404,
+            detail="Catch not found"
+        )
+
+    return {
+        "message": "Catch deleted successfully",
+        "id": catch_id
+    }
