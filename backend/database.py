@@ -58,3 +58,64 @@ def get_catches():
         ).fetchall()
 
         return [dict(row) for row in rows]
+
+#Update an existing catch record
+def update_catch(catch_id: int, catch_data: dict) -> bool:
+
+    #Only allow updates to known database columns
+    allowed_fields = {
+        "species",
+        "predicted_species",
+        "confidence",
+        "length_inches",
+        "weight_lbs",
+        "date_caught",
+        "location",
+        "lure",
+        "notes",
+        "image_url"
+    }
+
+    updates = {
+        key: value
+        for key, value in catch_data.items()
+        if key in allowed_fields
+    }
+
+    if not updates:
+        return False
+
+    #Construct the SQL UPDATE statement
+    columns = ", ".join(f"{key} = ?" for key in updates)
+
+    connection = sqlite3.connect(DATABASE_PATH)
+
+    try:
+        cursor = connection.execute(
+            f"UPDATE catches SET {columns} WHERE id = ?",
+            [*updates.values(), catch_id]
+        )
+
+        connection.commit()
+        return cursor.rowcount > 0
+
+    finally:
+        connection.close()
+
+
+#Delete an existing catch record
+def delete_catch(catch_id: int) -> bool:
+
+    connection = sqlite3.connect(DATABASE_PATH)
+
+    try:
+        cursor = connection.execute(
+            "DELETE FROM catches WHERE id = ?",
+            (catch_id,)
+        )
+
+        connection.commit()
+        return cursor.rowcount > 0
+
+    finally:
+        connection.close()
