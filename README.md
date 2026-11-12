@@ -1,4 +1,6 @@
 # Maryland Fish Logger
+##Demo Video
+[Maryland Fish Logger Demo](demo.mp4)
 ## Overview
 Maryland Fish Logger is a lightweight object detection application designed for recreational anglers in Maryland. The application uses a fine-tuned YOLOv8 object detection model to classify species from user-submitted images. From these model predictions, users can log their catches and manually confirm species, as well as save relevant information about their catches.
 The application backend is developed with Python and FastAPI, with a planned Android frontend.
