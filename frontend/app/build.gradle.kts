@@ -1,3 +1,15 @@
+import java.util.Properties
+
+//Load local development configuration
+val localProperties = Properties().apply {
+    rootProject.file("local.properties")
+        .inputStream()
+        .use { load(it) }
+}
+
+val apiBaseUrl = localProperties.getProperty("api.base.url")
+    ?: error("Missing api.base.url in local.properties")
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -9,6 +21,11 @@ android {
         version = release(37)
     }
 
+    buildFeatures {
+        buildConfig = true
+        compose = true
+    }
+
     defaultConfig {
         applicationId = "com.example.marylandfishlogger"
         minSdk = 26
@@ -17,6 +34,12 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField(
+            "String",
+            "API_BASE_URL",
+            "\"$apiBaseUrl\""
+        )
     }
 
     buildTypes {
@@ -30,9 +53,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-    }
-    buildFeatures {
-        compose = true
     }
 }
 

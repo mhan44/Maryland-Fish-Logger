@@ -35,8 +35,8 @@ import java.net.URL
 import java.util.UUID
 import java.time.LocalDate
 
-//Jetson IP
-internal const val BASE_URL = "http://10.200.52.53:8000"
+//Backend URL provided by Gradle configuration
+internal const val BASE_URL = BuildConfig.API_BASE_URL
 
 /*
 - Activity = Entry point for user interaction, usually a screen. MainActivity is the initial launch activity when the android app opens.
