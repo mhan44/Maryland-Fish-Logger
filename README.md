@@ -40,6 +40,13 @@ The YOLOv8n model was trained on 50 epochs over the subset DATA_MD_SUBSET, with 
 * Recall:       0.8613
 * mAP@50:       0.9136
 * mAP@50:95:    0.8041
+# Normalized CM
+![Normalized Confusion Matrix](/runs/fish_test/confusion_matrix_normalized.png)
+# Precision–Recall Curve
+![Precision–Recall Curve](runs/fish_test/BoxPR_curve.png)
+# Training curves
+Metric progression over training epochs (x-axis)
+![YOLOv8 Training Curves](runs/fish_yolov8n/results.png)
 ## Backend Structure:
 * data_count.py - Data exploration script which listed label counts for the original dataset
 * subset.py - Script to create the subset of selected species
