@@ -16,7 +16,7 @@ The application backend is developed with Python and FastAPI, with a planned And
 * ML: Ultralytics YOLOv8n, PyTorch
 * Backend Framework: FastAPI
 * Database: SQLite
-* Hardware: NVIDIA Jetson Nano
+* Hardware: NVIDIA Jetson
 * Docker Base Image: nvcr.io/nvidia/l4t-ml:r36.2.0-py3
 * Python Environment: Conda (YOLO_GPU)
 * Frontend: Android Studio, Kotlin
@@ -35,7 +35,7 @@ The YOLO model was fine-tuned using a subset of the open source 2025 Fish Finder
 9. "Bass - Largemouth"
 10. "Bass - Striped"
 ## Model Info
-The YOLOv8n model was trained on 50 epochs over the subset DATA_MD_SUBSET, with a batch size of 16 and default image size of 640x640. From the training, the best model weights were selected and used to evaluate the model on the validation set, producing these performance metrics:
+The YOLOv8n model was trained on 50 epochs over the subset DATA_MD_SUBSET, with a batch size of 16 and default image size of 640x640. From the training, the best model weights were selected and used to evaluate the model on the holdout test evaluation, producing these performance metrics:
 * Precision:    0.8570
 * Recall:       0.8613
 * mAP@50:       0.9136
@@ -59,10 +59,12 @@ Metric progression over training epochs (x-axis)
 ## Running backend
 From the root repository, run:
 * python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
-* With the IP address as the same network address the Jetson Nano device is connected to
+* The 0.0.0.0 address allows Uvicorn to listen on all available IPv4 networks 
 * The interactive API can be tested at: http://0.0.0.0:8000/docs
 ## Endpoints
 * POST - /predict = Upload image
 * POST - /catches = Log a catch record
 * GET - /catches = Retrieve all logged catch records
 * GET - /predictions/filename_url = retrieve output prediction image with bounding box, label, and confidence
+* DELETE - /catches/{catch_id} = Delete existing record
+* PUT - /catches/{catch_id} = Update existing record
